@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  tarantool:
+    image: tarantool/tarantool:2.7
+    container_name: mrratality-tarantool
+    volumes:
+      - ./data/tarantool:/var/lib/tarantool
+    ports:
+      - 3301:3301
+
+  clickhouse:
+    image: yandex/clickhouse-server:21.4
+    container_name: mrratality-clickhouse
+    volumes:
+      - ./data/clickhouse/data:/var/lib/clickhouse
+    ports:
+      - 8123:8123
+      - 9000:9000
+# TODO
+# backend:
+# frontend:
