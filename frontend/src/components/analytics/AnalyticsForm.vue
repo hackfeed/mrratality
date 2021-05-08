@@ -4,18 +4,16 @@
       <label for="file" class="flat">Browse</label>
       <input type="file" id="file" ref="file" @change="handleFileUpload" />
     </div>
-    <p v-if="!fileIsValid">Error while processing data file. Please check it's validity.</p>
     <base-button @click="submitFile">Upload</base-button>
   </section>
 </template>
 
 <script>
 export default {
-  emits: ["save-data"],
+  emits: ["upload-data"],
   data() {
     return {
       file: "",
-      fileIsValid: true,
     };
   },
   methods: {
@@ -23,10 +21,9 @@ export default {
       this.file = this.$refs.file.files[0];
     },
     submitFile() {
-      console.log(this.file);
       let formData = new FormData();
       formData.append("file", this.file);
-      this.$emit("save-data", formData);
+      this.$emit("upload-data", formData);
     },
   },
 };
