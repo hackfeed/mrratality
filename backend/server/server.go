@@ -1,17 +1,20 @@
 package server
 
-import "github.com/gin-gonic/gin"
+import (
+	"backend/server/controllers"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+)
 
 func SetupServer() *gin.Engine {
 	r := gin.Default()
 
-	r.GET("/ping", PingEndpoint)
+	r.Use(cors.Default())
+
+	r.POST("/upload", controllers.SaveFile)
+	r.POST("/parse", controllers.ParseFile)
+	// r.GET("/load/:id", controllers.LoadData)
 
 	return r
-}
-
-func PingEndpoint(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "pong",
-	})
 }
