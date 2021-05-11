@@ -1,6 +1,7 @@
 package server
 
 import (
+	storagedb "backend/db/storage"
 	"backend/server/controllers"
 
 	"github.com/gin-contrib/cors"
@@ -9,6 +10,8 @@ import (
 
 func SetupServer() *gin.Engine {
 	r := gin.Default()
+
+	storagedb.ConnectDB()
 
 	r.Use(cors.Default())
 

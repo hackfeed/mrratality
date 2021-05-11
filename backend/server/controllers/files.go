@@ -7,9 +7,11 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gocarina/gocsv"
 	"github.com/google/uuid"
 
 	"backend/server/models"
+	"backend/server/utils"
 )
 
 func SaveFile(c *gin.Context) {
@@ -47,7 +49,7 @@ func SaveFile(c *gin.Context) {
 }
 
 func ParseFile(c *gin.Context) {
-	var json models.Record
+	var json models.ParseRequest
 
 	err := c.ShouldBindJSON(&json)
 	if err != nil {
@@ -66,7 +68,23 @@ func ParseFile(c *gin.Context) {
 	}
 	defer file.Close()
 
-	// Parse here
+	invoices := []*models.Invoice{}
+
+	err = gocsv.UnmarshalFile(file, &invoices)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to parse given CSV file",
+		})
+		return
+	}
+
+	err = utils.Upload(json.UUID, invoices)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to upload data to database",
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "File parsed",

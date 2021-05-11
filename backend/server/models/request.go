@@ -1,5 +1,5 @@
 package models
 
-type Record struct {
+type ParseRequest struct {
 	UUID string `json:"uuid" binding:"required"`
 }
