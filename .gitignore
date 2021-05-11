@@ -1,6 +1,10 @@
 # Databases mapped data
 data/clickhouse
 data/tarantool
+data/mongo
+
+# Additional data
+data/scripts
 
 # OSX related files
 .DS_Store

@@ -17,6 +17,41 @@ services:
     ports:
       - 8123:8123
       - 9000:9000
-# TODO
-# backend:
-# frontend:
+
+  mongo:
+    image: mongo:4.4
+    container_name: mrratality-mongo
+    environment:
+      - MONGO_INITDB_DATABASE=mrr
+      - MONGO_INITDB_ROOT_USERNAME=mrruser
+      - MONGO_INITDB_ROOT_PASSWORD=mrrpass
+    volumes:
+      - ./data/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./data/mongo:/data/db
+    ports:
+      - 27017:27017
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: mrratality-frontend
+    command: npm run serve
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - 8080:8080
+
+  backend:
+    build:
+      context: ./backend
+    container_name: mrratality-backend
+    environment:
+      - PORT=8081
+    command: go run main.go
+    volumes:
+      - ./backend:/app
+    ports:
+      - 8081:8081
+    depends_on:
+      - clickhouse
