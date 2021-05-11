@@ -6,8 +6,14 @@
         <router-link to="/">mrratality</router-link>
       </h1>
       <ul>
-        <li>
+        <li v-if="isLoggedIn">
           <router-link to="/analytics">Analytics</router-link>
+        </li>
+        <li v-else>
+          <router-link to="/auth">Login</router-link>
+        </li>
+        <li v-if="isLoggedIn">
+          <base-button @click="logout">Logout</base-button>
         </li>
       </ul>
     </nav>
@@ -15,7 +21,19 @@
 </template>
 
 <script>
-export default {};
+export default {
+  computed: {
+    isLoggedIn() {
+      return this.$store.getters.isAuthenticated;
+    },
+  },
+  methods: {
+    logout() {
+      this.$store.dispatch("logout");
+      this.$router.replace("/");
+    },
+  },
+};
 </script>
 
 <style scoped>
