@@ -8,7 +8,7 @@ import (
 var DB *dbr.Connection
 
 func ConnectDB() {
-	conn, err := dbr.Open("clickhouse", "http://localhost:8123/default", nil)
+	conn, err := dbr.Open("clickhouse", "http://clickhouse:8123/default", nil)
 	if err != nil {
 		panic("Failed to connect to database")
 	}
