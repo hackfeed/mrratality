@@ -16,3 +16,6 @@
 
 # Backend static files
 static
+
+# Environment variables
+.env

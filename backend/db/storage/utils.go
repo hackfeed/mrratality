@@ -1,6 +1,8 @@
 package storagedb
 
 import (
+	"os"
+
 	"github.com/mailru/dbr"
 	_ "github.com/mailru/go-clickhouse"
 )
@@ -8,19 +10,19 @@ import (
 var DB *dbr.Connection
 
 func ConnectDB() {
-	conn, err := dbr.Open("clickhouse", "http://clickhouse:8123/default", nil)
+	conn, err := dbr.Open("clickhouse", os.Getenv("CLICKHOUSE_URL"), nil)
 	if err != nil {
-		panic("Failed to connect to database")
+		panic("Failed to connect to Clickhouse")
 	}
 
 	err = initDB(conn)
 	if err != nil {
-		panic("Failed to create database")
+		panic("Failed to create Clickhouse database")
 	}
 
 	err = initTable(conn)
 	if err != nil {
-		panic("Failed to create table")
+		panic("Failed to create Clickhouse table")
 	}
 
 	DB = conn
