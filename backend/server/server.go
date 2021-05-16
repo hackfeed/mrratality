@@ -16,13 +16,23 @@ func SetupServer() *gin.Engine {
 	storagedb.ConnectDB()
 	userdb.ConnectDB()
 
-	r.Use(cors.Default())
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowHeaders = []string{"token"}
+	r.Use(cors.New(config))
+
 	r.POST("/signup", controllers.SignUp)
 	r.POST("/login", controllers.Login)
+
 	r.Use(middlewares.Auth())
-	r.POST("/upload", controllers.SaveFile)
-	r.POST("/parse", controllers.ParseFile)
-	// r.GET("/load/:id", controllers.LoadData)
+
+	files := r.Group("/files")
+	{
+		files.POST("/upload", controllers.SaveFile)
+		files.POST("/parse", controllers.ParseFile)
+		files.GET("/load", controllers.LoadFiles)
+		// r.GET("/load/:id", controllers.LoadData)
+	}
 
 	return r
 }

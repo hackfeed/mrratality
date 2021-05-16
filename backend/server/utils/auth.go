@@ -49,7 +49,7 @@ func GenerateTokens(email, userId string) (string, string, error) {
 }
 
 func UpdateTokens(signedToken, signedRefreshToken, userId string) error {
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 
 	var updateObj primitive.D
 
