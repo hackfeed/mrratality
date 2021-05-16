@@ -71,7 +71,7 @@ export default {
         } else {
           await this.$store.dispatch("signup", actionPayload);
         }
-        const redirectUrl = "/" + (this.$route.query.redirect || "");
+        const redirectUrl = "/" + (this.$route.query.redirect || "analytics");
         this.$router.replace(redirectUrl);
       } catch (error) {
         this.error = error.message || "Failed to authenticate, try later!";

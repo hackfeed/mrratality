@@ -10,13 +10,16 @@
         <input type="month" name="periodEnd" id="periodEnd" v-model="periodEnd" />
       </div>
     </div>
-    <base-button @click="submitPeriods">Load report</base-button>
+    <div>
+      <base-button mode="flat" @click="uploadNew(false)">Back to files</base-button>
+      <base-button @click="submitPeriods">Load report</base-button>
+    </div>
   </section>
 </template>
 
 <script>
 export default {
-  emits: ["load-data"],
+  emits: ["load-data", "upload-new"],
   data() {
     return {
       periodStart: "2021-01",
@@ -27,14 +30,14 @@ export default {
     submitPeriods() {
       this.$emit("load-data", { periodStart: this.periodStart, periodEnd: this.periodEnd });
     },
+    uploadNew(toUpload) {
+      this.$emit("upload-new", toUpload);
+    },
   },
 };
 </script>
 
 <style scoped>
-button {
-  margin: 0;
-}
 label {
   font-weight: bold;
   display: block;

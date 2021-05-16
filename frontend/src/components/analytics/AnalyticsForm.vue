@@ -4,13 +4,16 @@
       <label for="file" class="flat">Browse</label>
       <input type="file" id="file" ref="file" @change="handleFileUpload" />
     </div>
-    <base-button @click="submitFile">Upload</base-button>
+    <div>
+      <base-button mode="flat" @click="uploadNew(false)">Back to files</base-button>
+      <base-button @click="submitFile">Upload</base-button>
+    </div>
   </section>
 </template>
 
 <script>
 export default {
-  emits: ["upload-data"],
+  emits: ["upload-data", "upload-new"],
   data() {
     return {
       file: "",
@@ -24,6 +27,9 @@ export default {
       let formData = new FormData();
       formData.append("file", this.file);
       this.$emit("upload-data", formData);
+    },
+    uploadNew(toUpload) {
+      this.$emit("upload-new", toUpload);
     },
   },
 };

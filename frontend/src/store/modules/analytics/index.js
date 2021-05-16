@@ -7,8 +7,8 @@ export default {
   state() {
     return {
       lastFetch: null,
-      dataIsUploaded: false,
-      dataIsLoaded: false,
+      files: null,
+      file: null,
       data: {
         labels: [
           "5.18",

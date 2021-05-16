@@ -14,6 +14,21 @@ import TheHeader from "./components/layout/TheHeader.vue";
 import TheFooter from "./components/layout/TheFooter.vue";
 export default {
   components: { TheHeader, TheFooter },
+  computed: {
+    didAutoLogout() {
+      return this.$store.getters.didAutoLogout;
+    },
+  },
+  created() {
+    this.$store.dispatch("tryLogin");
+  },
+  watch: {
+    didAutoLogout(curValue, oldValue) {
+      if (curValue && curValue != oldValue) {
+        this.$router.replace("/");
+      }
+    },
+  },
 };
 </script>
 

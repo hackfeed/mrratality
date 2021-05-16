@@ -1,9 +1,9 @@
 export default {
-  dataIsUploaded(state) {
-    return state.dataIsUploaded;
+  files(state) {
+    return state.files;
   },
-  dataIsLoaded(state) {
-    return state.dataIsLoaded;
+  file(state) {
+    return state.file;
   },
   data(state) {
     return state.data;

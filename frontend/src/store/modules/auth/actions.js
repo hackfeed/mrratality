@@ -3,9 +3,9 @@ let timer;
 export default {
   async auth(context, payload) {
     const mode = payload.mode;
-    let url = "path";
+    let url = "http://localhost:8081/signup";
     if (mode === "login") {
-      url = "path";
+      url = "http://localhost:8081/login";
     }
     const response = await fetch(url, {
       method: "POST",
@@ -21,8 +21,8 @@ export default {
       throw error;
     }
 
-    const expiresIn = +responseData.expiresIn * 1000;
-    const expirationDate = new Date().getTime() + expiresIn;
+    const expirationDate = +responseData.expiresAt;
+    const expiresIn = expirationDate * 1000 - new Date().getTime();
 
     localStorage.setItem("token", responseData.idToken);
     localStorage.setItem("userId", responseData.localId);
@@ -42,7 +42,7 @@ export default {
     const userId = localStorage.getItem("userId");
     const tokenExpiration = localStorage.getItem("tokenExpiration");
 
-    const expiresIn = +tokenExpiration - new Date().getTime();
+    const expiresIn = +tokenExpiration * 1000 - new Date().getTime();
 
     if (expiresIn < 0) {
       return;
@@ -76,6 +76,7 @@ export default {
       token: null,
       userId: null,
     });
+    context.commit("analytics/setFile", null);
   },
   autoLogout(context) {
     context.dispatch("logout");
