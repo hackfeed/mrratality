@@ -19,7 +19,6 @@ func LoadFiles(c *gin.Context) {
 	if !ie {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Unable to determine logged in user",
-			"files":   map[string]interface{}{},
 		})
 		return
 	}
@@ -28,7 +27,6 @@ func LoadFiles(c *gin.Context) {
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to fetch user files",
-			"files":   map[string]interface{}{},
 		})
 		return
 	}
@@ -43,8 +41,7 @@ func SaveFile(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message":  "No file is received",
-			"filename": "",
+			"message": "No file is received",
 		})
 		return
 	}
@@ -52,8 +49,7 @@ func SaveFile(c *gin.Context) {
 	fext := filepath.Ext(file.Filename)
 	if fext != ".csv" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message":  "Wrong file format. Please provide CSV file",
-			"filename": "",
+			"message": "Wrong file format. Please provide CSV file",
 		})
 		return
 	}
@@ -61,8 +57,7 @@ func SaveFile(c *gin.Context) {
 	userId, ie := c.Get("userId")
 	if !ie {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message":  "Unable to determine logged in user",
-			"filename": "",
+			"message": "Unable to determine logged in user",
 		})
 		return
 	}
@@ -79,8 +74,7 @@ func SaveFile(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message":  "Unable to save the file",
-			"filename": "",
+			"message": "Unable to save the file",
 		})
 		return
 	}
@@ -88,41 +82,23 @@ func SaveFile(c *gin.Context) {
 	err = utils.UpdateFiles(fname, userId.(string))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message":  "Unable to update user in db",
-			"filename": "",
+			"message": "Unable to update user in db",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message":  "File uploaded",
-		"filename": fname,
-	})
-}
-
-func ParseFile(c *gin.Context) {
-	var req models.ParseRequest
-
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": "Failed to parse request body",
-		})
-		return
-	}
-
-	file, err := os.Open(fmt.Sprintf("static/%v.csv", req.UUID))
+	csvFile, err := os.Open(fpath)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to find data with given id",
 		})
 		return
 	}
-	defer file.Close()
+	defer csvFile.Close()
 
 	invoices := []*models.Invoice{}
 
-	err = gocsv.UnmarshalFile(file, &invoices)
+	err = gocsv.UnmarshalFile(csvFile, &invoices)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": "Failed to parse given CSV file",
@@ -130,7 +106,7 @@ func ParseFile(c *gin.Context) {
 		return
 	}
 
-	err = utils.Upload(req.UUID, invoices)
+	err = utils.UploadFile(userId.(string), fname, invoices)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": "Failed to upload data to database",
@@ -139,6 +115,7 @@ func ParseFile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "File parsed",
+		"message":  "File uploaded",
+		"filename": fname,
 	})
 }

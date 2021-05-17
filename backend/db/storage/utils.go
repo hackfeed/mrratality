@@ -45,6 +45,7 @@ func initTable(conn *dbr.Connection) error {
 	_, err := sess.Exec(`
 	CREATE TABLE IF NOT EXISTS mrr.storage(
 		user_id String,
+		file_id String,
 		invoice_created Date,
 		invoice_id UInt32,
 		customer_id UInt32,

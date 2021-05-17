@@ -4,39 +4,25 @@ import (
 	storagedb "backend/db/storage"
 	userdb "backend/db/user"
 	"backend/server/models"
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func LoadFiles(userId string) ([]map[string]interface{}, error) {
-	var user userdb.User
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	filter := bson.M{"user_id": userId}
-	err := userdb.UserCol.FindOne(ctx, filter).Decode(&user)
+	user, err := userdb.Read(bson.M{"user_id": userId})
 	if err != nil {
-		return nil, err
+		return []map[string]interface{}{}, err
 	}
 
 	return user.Files, nil
 }
 
 func UpdateFiles(fname, userId string) error {
-	var user userdb.User
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
-
-	filter := bson.M{"user_id": userId}
-	err := userdb.UserCol.FindOne(ctx, filter).Decode(&user)
+	user, err := userdb.Read(bson.M{"user_id": userId})
 	if err != nil {
 		return err
 	}
@@ -47,49 +33,23 @@ func UpdateFiles(fname, userId string) error {
 	files := append(user.Files, bson.M{"name": fname, "uploaded_at": uploadedAt})
 	updateObj = append(updateObj, bson.E{"files", files})
 
-	upsert := true
-	opt := options.UpdateOptions{
-		Upsert: &upsert,
-	}
-
-	_, err = userdb.UserCol.UpdateOne(
-		ctx,
-		filter,
-		bson.D{
-			{"$set", updateObj},
-		},
-		&opt,
-	)
-	defer cancel()
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return userdb.Update(updateObj, bson.M{"user_id": userId})
 }
 
-func Upload(userID string, invoices []*models.Invoice) error {
-	sess := storagedb.DB.NewSession(nil)
-	tx, err := sess.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.RollbackUnlessCommitted()
+func UploadFile(userID, fileID string, invoices []*models.Invoice) error {
+	var tfInvoices []storagedb.Invoice
 
 	for _, invoice := range invoices {
-		err = storagedb.Create(sess, "mrr.storage", storagedb.AllFields, mapModelToEntity(userID, *invoice))
-		if err != nil {
-			return err
-		}
+		tfInvoices = append(tfInvoices, mapModelToEntity(userID, fileID, *invoice))
 	}
 
-	return tx.Commit()
+	return storagedb.CreateMultiple("mrr.storage", storagedb.AllFields, tfInvoices)
 }
 
-func mapModelToEntity(userID string, model models.Invoice) storagedb.Invoice {
+func mapModelToEntity(userID, fileID string, model models.Invoice) storagedb.Invoice {
 	return storagedb.Invoice{
 		UserID:         userID,
+		FileID:         fileID,
 		InvoiceCreated: mapDate(model.InvoiceCreated),
 		InvoiceId:      model.InvoiceId,
 		CustomerId:     model.CustomerId,

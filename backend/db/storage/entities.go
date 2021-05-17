@@ -2,6 +2,7 @@ package storagedb
 
 var AllFields = []string{
 	"user_id",
+	"file_id",
 	"invoice_created",
 	"invoice_id",
 	"customer_id",
@@ -15,6 +16,7 @@ var AllFields = []string{
 
 type Invoice struct {
 	UserID         string  `db:"user_id"`
+	FileID         string  `db:"file_id"`
 	InvoiceCreated string  `db:"invoice_created"`
 	InvoiceId      uint32  `db:"invoice_id"`
 	CustomerId     uint32  `db:"customer_id"`
