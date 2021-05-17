@@ -5,7 +5,9 @@
       <input type="file" id="file" ref="file" @change="handleFileUpload" />
     </div>
     <div>
-      <base-button mode="flat" @click="uploadNew(false)">Back to files</base-button>
+      <base-button v-if="!filesNotEmpty" mode="flat" @click="uploadNew(false)"
+        >Back to files</base-button
+      >
       <base-button @click="submitFile">Upload</base-button>
     </div>
   </section>
@@ -13,6 +15,7 @@
 
 <script>
 export default {
+  props: ["files-not-empty"],
   emits: ["upload-data", "upload-new"],
   data() {
     return {

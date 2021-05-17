@@ -4,11 +4,7 @@
       <p>{{ error }}</p>
     </base-dialog>
     <base-card class="centered">
-      <div v-if="isLoading && !uploadNew && !isUploaded && !isLoaded">
-        <h2>Loading user files</h2>
-        <base-spinner></base-spinner>
-      </div>
-      <div v-else-if="!isLoading && !uploadNew && !isUploaded">
+      <div v-if="!uploadNew && !isUploaded && !isLoading && analyticsFiles.length > 0">
         <analytics-files
           :files="analyticsFiles"
           @upload-new="setUploadNew"
@@ -16,9 +12,13 @@
           @is-uploaded="setIsUploaded"
         ></analytics-files>
       </div>
-      <div v-if="uploadNew && !isUploaded && !isLoading">
+      <div v-else-if="!isUploaded && !isLoading">
         <h2>Please upload CSV file below</h2>
-        <analytics-form @upload-data="uploadData" @upload-new="setUploadNew"></analytics-form>
+        <analytics-form
+          :files-not-empty="analyticsFilesEmpty"
+          @upload-data="uploadData"
+          @upload-new="setUploadNew"
+        ></analytics-form>
       </div>
       <div v-else-if="isLoading">
         <h2>Data uploading is in process</h2>
@@ -66,28 +66,32 @@ export default {
     analyticsOptions() {
       return this.$store.getters["analytics/dataOptions"];
     },
+    analyticsFilesEmpty() {
+      return this.analyticsFiles.length === 0;
+    },
   },
   methods: {
     async uploadData(data) {
       this.isLoading = true;
       try {
         await this.$store.dispatch("analytics/uploadData", data);
+        this.isUploaded = true;
+        this.file = this.$store.getters["analytics/file"];
+        await this.loadFiles();
       } catch (error) {
         this.error = error.message || "Something went wrong!";
       }
       this.isLoading = false;
-      this.isUploaded = true;
-      this.file = this.$store.getters["analytics/file"];
     },
     async loadData(data) {
       this.isLoading = true;
       try {
         await this.$store.dispatch("analytics/loadData", data);
+        this.isLoaded = true;
       } catch (error) {
         this.error = error.message || "Something went wrong!";
       }
       this.isLoading = false;
-      this.isLoaded = true;
     },
     async loadFiles() {
       this.isLoading = true;
@@ -102,6 +106,7 @@ export default {
       if (data === false) {
         this.isUploaded = false;
         this.isLoaded = false;
+        this.file = null;
       }
       this.uploadNew = data;
     },

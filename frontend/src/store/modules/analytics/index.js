@@ -7,7 +7,7 @@ export default {
   state() {
     return {
       lastFetch: null,
-      files: null,
+      files: [],
       file: null,
       data: {
         labels: [
