@@ -2,9 +2,10 @@
   <section>
     <h2>Uploaded files</h2>
     <ul>
-      <div @click="chooseFile(file)" class="entry" v-for="file in files" :key="file">
+      <div @click.self="chooseFile(file)" class="entry" v-for="file in files" :key="file">
         <p class="filename">{{ file.name }}</p>
         <p class="uploaded-at">Uploaded at {{ parseDate(file.uploaded_at) }}</p>
+        <img @click="deleteFile(file)" src="@/assets/remove.png" alt="Remove file" />
       </div>
     </ul>
     <base-button @click="uploadNew(true)">Upload new</base-button>
@@ -14,7 +15,7 @@
 <script>
 export default {
   props: ["files"],
-  emits: ["upload-new", "choose-file", "is-uploaded"],
+  emits: ["upload-new", "choose-file", "delete-file", "is-uploaded"],
   methods: {
     parseDate(date) {
       const unixTime = Date.parse(date);
@@ -29,6 +30,9 @@ export default {
       this.$emit("choose-file", file.name);
       this.$emit("is-uploaded", true);
     },
+    deleteFile(file) {
+      this.$emit("delete-file", file.name);
+    },
   },
 };
 </script>
@@ -37,12 +41,15 @@ export default {
 ul {
   padding: 0;
 }
+img {
+  width: 1rem;
+}
 .entry {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 0 0 0.5rem;
-  padding: 0 0.5rem;
+  padding: 0 0.2rem;
   border: 1px rgba(0, 0, 0, 0.26) solid;
   border-radius: 0.5rem;
 }

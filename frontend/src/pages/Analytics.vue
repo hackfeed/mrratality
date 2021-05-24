@@ -9,6 +9,7 @@
           :files="analyticsFiles"
           @upload-new="setUploadNew"
           @choose-file="setFile"
+          @delete-file="deleteFile"
           @is-uploaded="setIsUploaded"
         ></analytics-files>
       </div>
@@ -101,6 +102,14 @@ export default {
         this.error = error.message || "Something went wrong!";
       }
       this.isLoading = false;
+    },
+    async deleteFile(data) {
+      try {
+        await this.$store.dispatch("analytics/deleteFile", data);
+        await this.loadFiles();
+      } catch (error) {
+        this.error = error.message || "Something went wrong!";
+      }
     },
     setUploadNew(data) {
       if (data === false) {

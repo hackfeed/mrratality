@@ -47,4 +47,29 @@ export default {
 
     context.commit("setFiles", responseData.files);
   },
+  async deleteFile(context, data) {
+    const reqData = {
+      name: data,
+    };
+
+    const response = await fetch("http://localhost:8081/files/delete", {
+      method: "POST",
+      body: JSON.stringify(reqData),
+      headers: {
+        token: localStorage.getItem("token"),
+      },
+    });
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      const error = new Error(responseData.message || "Failed to delete file");
+      throw error;
+    }
+
+    const files = context.rootGetters["analytics/files"].filter(
+      (file) => file.name != reqData.name
+    );
+
+    context.commit("setFiles", files);
+  },
 };
