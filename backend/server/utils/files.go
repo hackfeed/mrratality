@@ -5,6 +5,7 @@ import (
 	userdb "backend/db/user"
 	"backend/server/models"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -12,17 +13,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func LoadFiles(userId string) ([]map[string]interface{}, error) {
-	user, err := userdb.Read(bson.M{"user_id": userId})
-	if err != nil {
-		return []map[string]interface{}{}, err
-	}
+func LoadFiles(userID string) ([]map[string]interface{}, error) {
+	user, err := userdb.Read(bson.M{"user_id": userID})
 
-	return user.Files, nil
+	return user.Files, err
 }
 
-func UpdateFiles(fname, userId string) error {
-	user, err := userdb.Read(bson.M{"user_id": userId})
+func UpdateFiles(fname, userID string) error {
+	user, err := userdb.Read(bson.M{"user_id": userID})
 	if err != nil {
 		return err
 	}
@@ -33,7 +31,37 @@ func UpdateFiles(fname, userId string) error {
 	files := append(user.Files, bson.M{"name": fname, "uploaded_at": uploadedAt})
 	updateObj = append(updateObj, bson.E{"files", files})
 
-	return userdb.Update(updateObj, bson.M{"user_id": userId})
+	return userdb.Update(updateObj, bson.M{"user_id": userID})
+}
+
+func DeleteFile(userID, fileID string) error {
+	err := os.Remove(fmt.Sprintf("static/%v/%v", userID, fileID))
+	if err != nil {
+		return err
+	}
+
+	user, err := userdb.Read(bson.M{"user_id": userID})
+	if err != nil {
+		return err
+	}
+
+	var updateObj primitive.D
+	newFiles := []map[string]interface{}{}
+
+	for _, file := range user.Files {
+		if file["name"] != fileID {
+			newFiles = append(newFiles, file)
+		}
+	}
+
+	updateObj = append(updateObj, bson.E{"files", newFiles})
+
+	err = userdb.Update(updateObj, bson.M{"user_id": userID})
+	if err != nil {
+		return err
+	}
+
+	return storagedb.Delete("mrr.storage", userID, fileID)
 }
 
 func UploadFile(userID, fileID string, invoices []*models.Invoice) error {
@@ -48,17 +76,13 @@ func UploadFile(userID, fileID string, invoices []*models.Invoice) error {
 
 func mapModelToEntity(userID, fileID string, model models.Invoice) storagedb.Invoice {
 	return storagedb.Invoice{
-		UserID:         userID,
-		FileID:         fileID,
-		InvoiceCreated: mapDate(model.InvoiceCreated),
-		InvoiceId:      model.InvoiceId,
-		CustomerId:     model.CustomerId,
-		PaidAmount:     model.PaidAmount,
-		PaidCurrency:   model.PaidCurrency,
-		PeriodStart:    mapDate(model.PeriodStart),
-		PeriodEnd:      mapDate(model.PeriodEnd),
-		PaidUser:       model.PaidUser,
-		PaidPlan:       model.PaidPlan,
+		UserID:      userID,
+		FileID:      fileID,
+		CustomerId:  model.CustomerId,
+		PeriodStart: mapDate(model.PeriodStart),
+		PaidPlan:    model.PaidPlan,
+		PaidAmount:  model.PaidAmount,
+		PeriodEnd:   mapDate(model.PeriodEnd),
 	}
 }
 

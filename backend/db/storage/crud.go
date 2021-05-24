@@ -1,13 +1,12 @@
 package storagedb
 
+import "fmt"
+
 func Create(table string, fields []string, data Invoice) error {
 	sess := DB.NewSession(nil)
 	_, err := sess.InsertInto(table).Columns(fields...).Record(&data).Exec()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func CreateMultiple(table string, fields []string, data []Invoice) error {
@@ -33,9 +32,16 @@ func Read(table string, fields []string) ([]Invoice, error) {
 
 	sess := DB.NewSession(nil)
 	_, err := sess.Select(fields...).From(table).LoadStructs(&data)
-	if err != nil {
-		return data, err
-	}
 
-	return data, nil
+	return data, err
+}
+
+func Delete(table, userID, fileID string) error {
+	sess := DB.NewSession(nil)
+	_, err := sess.DeleteBySql(
+		fmt.Sprintf(
+			"ALTER TABLE %v DELETE WHERE user_id = '%v' AND file_id = '%v'", table, userID, fileID,
+		)).Exec()
+
+	return err
 }

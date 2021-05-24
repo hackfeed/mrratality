@@ -39,6 +39,7 @@ func SignUp(email, password string) (User, error) {
 	token, refreshToken, _ := generateTokens(*user.Email, user.UserID)
 	user.Token = &token
 	user.RefreshToken = &refreshToken
+	user.Files = []map[string]interface{}{}
 
 	_, err = UserCol.InsertOne(ctx, user)
 	if err != nil {

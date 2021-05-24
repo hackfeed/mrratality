@@ -46,10 +46,10 @@ func ConnectDB() {
 	DB = client
 }
 
-func generateTokens(email, userId string) (string, string, error) {
+func generateTokens(email, userID string) (string, string, error) {
 	claims := &signedDetails{
 		Email:  email,
-		UserID: userId,
+		UserID: userID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(1)).Unix(),
 		},
@@ -73,7 +73,7 @@ func generateTokens(email, userId string) (string, string, error) {
 	return token, refreshToken, nil
 }
 
-func updateTokens(signedToken, signedRefreshToken, userId string) error {
+func updateTokens(signedToken, signedRefreshToken, userID string) error {
 	updatedAt, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 
 	var updateObj primitive.D
@@ -82,7 +82,7 @@ func updateTokens(signedToken, signedRefreshToken, userId string) error {
 	updateObj = append(updateObj, bson.E{"refresh_token", signedRefreshToken})
 	updateObj = append(updateObj, bson.E{"updated_at", updatedAt})
 
-	return Update(updateObj, bson.M{"user_id": userId})
+	return Update(updateObj, bson.M{"user_id": userID})
 }
 
 func hashPassword(pass string) (string, error) {

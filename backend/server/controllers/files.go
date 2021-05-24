@@ -15,7 +15,7 @@ import (
 )
 
 func LoadFiles(c *gin.Context) {
-	userId, ie := c.Get("userId")
+	userID, ie := c.Get("userID")
 	if !ie {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Unable to determine logged in user",
@@ -23,7 +23,7 @@ func LoadFiles(c *gin.Context) {
 		return
 	}
 
-	files, err := utils.LoadFiles(userId.(string))
+	files, err := utils.LoadFiles(userID.(string))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Failed to fetch user files",
@@ -34,6 +34,39 @@ func LoadFiles(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "File uploaded",
 		"files":   files,
+	})
+}
+
+func DeleteFile(c *gin.Context) {
+	userID, ie := c.Get("userID")
+	if !ie {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "Unable to determine logged in user",
+		})
+		return
+	}
+
+	var req models.File
+
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to parse request body",
+		})
+		return
+	}
+
+	err = utils.DeleteFile(userID.(string), req.Name)
+	if err != nil {
+		fmt.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": "Failed to delete file",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "File deleted",
 	})
 }
 
@@ -54,7 +87,7 @@ func SaveFile(c *gin.Context) {
 		return
 	}
 
-	userId, ie := c.Get("userId")
+	userID, ie := c.Get("userID")
 	if !ie {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Unable to determine logged in user",
@@ -62,7 +95,7 @@ func SaveFile(c *gin.Context) {
 		return
 	}
 
-	dir := fmt.Sprintf("static/%v", userId)
+	dir := fmt.Sprintf("static/%v", userID)
 	fname := fmt.Sprintf("%v%v", uuid.New(), fext)
 	fpath := fmt.Sprintf("%v/%v", dir, fname)
 
@@ -79,7 +112,7 @@ func SaveFile(c *gin.Context) {
 		return
 	}
 
-	err = utils.UpdateFiles(fname, userId.(string))
+	err = utils.UpdateFiles(fname, userID.(string))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Unable to update user in db",
@@ -106,7 +139,7 @@ func SaveFile(c *gin.Context) {
 		return
 	}
 
-	err = utils.UploadFile(userId.(string), fname, invoices)
+	err = utils.UploadFile(userID.(string), fname, invoices)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": "Failed to upload data to database",

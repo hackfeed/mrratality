@@ -29,6 +29,7 @@ func SetupServer() *gin.Engine {
 	files := r.Group("/files")
 	{
 		files.POST("/upload", controllers.SaveFile)
+		files.POST("/delete", controllers.DeleteFile)
 		files.GET("/load", controllers.LoadFiles)
 	}
 
