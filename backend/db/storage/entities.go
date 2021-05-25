@@ -19,3 +19,19 @@ type Invoice struct {
 	PaidAmount  float32 `db:"paid_amount"`
 	PeriodEnd   string  `db:"period_end"`
 }
+
+type MRR struct {
+	New          float32
+	Old          float32
+	Reactivation float32
+	Expansion    float32
+	Contraction  float32
+	Churn        float32
+}
+
+type MPP struct {
+	UserFileID  string
+	PeriodStart string
+	PeriodEnd   string
+	Dates       []string
+}
