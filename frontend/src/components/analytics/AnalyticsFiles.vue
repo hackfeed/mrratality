@@ -2,10 +2,10 @@
   <section>
     <h2>Uploaded files</h2>
     <ul>
-      <div @click.self="chooseFile(file)" class="entry" v-for="file in files" :key="file">
+      <div @click="chooseFile(file)" class="entry" v-for="file in files" :key="file">
         <p class="filename">{{ file.name }}</p>
         <p class="uploaded-at">Uploaded at {{ parseDate(file.uploaded_at) }}</p>
-        <img @click="deleteFile(file)" src="@/assets/remove.png" alt="Remove file" />
+        <img @click.stop="deleteFile(file)" src="@/assets/remove.png" alt="Remove file" />
       </div>
     </ul>
     <base-button @click="uploadNew(true)">Upload new</base-button>

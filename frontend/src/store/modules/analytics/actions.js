@@ -16,19 +16,22 @@ export default {
 
     context.commit("setFile", responseData.filename);
   },
-  async loadData(context) {
-    // const periodStart = data.periodStart;
-    // const periodEnd = data.periodEnd;
+  async loadData(context, data) {
+    const response = await fetch("http://localhost:8081/analytics", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        token: localStorage.getItem("token"),
+      },
+    });
+    const responseData = await response.json();
 
-    // const response = await fetch("path/to/backend", {
-    //   body: JSON.stringify({ periodStart, periodEnd }),
-    // });
-    // const responseData = await response.json();
+    if (!response.ok) {
+      const error = new Error(responseData.message || "Failed to load analytics.");
+      throw error;
+    }
 
-    // if (!response.ok) {
-    //   const error = new Error(responseData.message || "Failed to fill data.");
-    //   throw error;
-    // }
+    console.log(responseData);
 
     context.commit("setData", context.rootGetters["analytics/data"]);
   },

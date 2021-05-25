@@ -22,7 +22,6 @@
         ></analytics-form>
       </div>
       <div v-else-if="isLoading">
-        <h2>Data uploading is in process</h2>
         <base-spinner></base-spinner>
       </div>
       <div v-else-if="isUploaded">
@@ -86,6 +85,11 @@ export default {
     },
     async loadData(data) {
       this.isLoading = true;
+      data = {
+        filename: this.file,
+        period_start: data.periodStart + "-01",
+        period_end: data.periodEnd + "-01",
+      };
       try {
         await this.$store.dispatch("analytics/loadData", data);
         this.isLoaded = true;
