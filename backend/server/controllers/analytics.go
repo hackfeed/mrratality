@@ -28,7 +28,7 @@ func GetAnalytics(c *gin.Context) {
 		return
 	}
 
-	data, err := utils.GetAnalytics(userID.(string), req.Filename, req.PeriodStart, req.PeriodEnd)
+	err = utils.GetAnalytics(userID.(string), req.Filename, req.PeriodStart, req.PeriodEnd)
 	if err != nil {
 		fmt.Println(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -39,6 +39,6 @@ func GetAnalytics(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Analytics is loaded",
-		"data":    data,
+		"data":    "data",
 	})
 }

@@ -2,7 +2,7 @@ package storagedb
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"os"
 	"text/template"
 
@@ -31,38 +31,37 @@ func ConnectDB() {
 	DB = conn
 }
 
-func CreateMPPTable(conn *dbr.Connection, mpp MPP) (string, error) {
+func CreateMPPTable(conn *dbr.Connection, mpp MPP) error {
 	tmpl :=
 		`
-	CREATE TABLE IF NOT EXISTS mrr."{{ .UserFileID }}-{{ .PeriodStart }}-{{ .PeriodEnd }}"(
-		userfile_id String,
+	CREATE TABLE mrr."{{ .UserFileID }}-{{ .PeriodStart }}-{{ .PeriodEnd }}"(
+		customer_id String,
 		{{ $first := true }}{{ range .Dates }}{{if $first}}{{$first = false}}{{else}},{{end}}
 		"{{ . }}" Float32{{ end }}
 	)
 	ENGINE = SummingMergeTree()
-	ORDER BY userfile_id
+	ORDER BY customer_id
 	`
 
 	t, err := template.New("crtbl").Parse(tmpl)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	buf := &bytes.Buffer{}
 	err = t.Execute(buf, mpp)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	query := buf.String()
-	fmt.Println(query)
 	sess := conn.NewSession(nil)
 	_, err = sess.Exec(query)
 	if err != nil {
-		return "", err
+		return errors.New("table already exists")
 	}
 
-	return "", nil
+	return nil
 }
 
 func initDB(conn *dbr.Connection) error {
