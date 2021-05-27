@@ -5,10 +5,10 @@ export default {
   setData(state, data) {
     state.data = data;
   },
+  setGrid(state, data) {
+    state.grid = data;
+  },
   setFiles(state, data) {
     state.files = data;
-  },
-  setFetchTimestamp(state) {
-    state.lastFetch = new Date().getTime();
   },
 };

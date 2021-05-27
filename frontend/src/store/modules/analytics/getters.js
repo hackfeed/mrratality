@@ -8,15 +8,10 @@ export default {
   data(state) {
     return state.data;
   },
+  grid(state) {
+    return state.grid;
+  },
   dataOptions(state) {
     return state.dataOptions;
-  },
-  shouldUpdate(state) {
-    const lastFetch = state.lastFetch;
-    if (!lastFetch) {
-      return true;
-    }
-    const currentTimestamp = new Date().getTime();
-    return (currentTimestamp - lastFetch) / 1000 > 60;
   },
 };

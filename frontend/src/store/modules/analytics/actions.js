@@ -31,9 +31,64 @@ export default {
       throw error;
     }
 
-    console.log(responseData);
+    const curData = context.rootGetters["analytics/data"];
+    const mrr = responseData.mrr;
+    const months = responseData.months;
 
-    context.commit("setData", context.rootGetters["analytics/data"]);
+    curData.labels = months;
+
+    const newMRR = [];
+    const oldMRR = [];
+    const expansionMRR = [];
+    const reactivationMRR = [];
+    const contractionMRR = [];
+    const churnMRR = [];
+
+    for (const el of mrr) {
+      newMRR.push(el.New);
+      oldMRR.push(el.Old);
+      expansionMRR.push(el.Expansion);
+      reactivationMRR.push(el.Reactivation);
+      contractionMRR.push(el.Contraction);
+      churnMRR.push(el.Churn);
+    }
+
+    for (const el of curData.datasets) {
+      if (el.label === "New") {
+        el.data = newMRR;
+      }
+      if (el.label === "Old") {
+        el.data = oldMRR;
+      }
+      if (el.label === "Expansion") {
+        el.data = expansionMRR;
+      }
+      if (el.label === "Reactivation") {
+        el.data = reactivationMRR;
+      }
+      if (el.label === "Contraction") {
+        el.data = contractionMRR;
+      }
+      if (el.label === "Churn") {
+        el.data = churnMRR;
+      }
+    }
+
+    const grid = {
+      title: "Monthly Reccuring Revenue (Table)",
+      cols: ["", ...months],
+      rows: [
+        ["New", ...newMRR],
+        ["Old", ...oldMRR],
+        ["Expansion", ...expansionMRR],
+        ["Reactivation", ...reactivationMRR],
+        ["Contraction", ...contractionMRR],
+        ["Churn", ...churnMRR],
+      ],
+    };
+
+    context.commit("setGrid", grid);
+    context.commit("setData", curData);
   },
   async loadFiles(context) {
     const response = await fetch("http://localhost:8081/files/load", {

@@ -32,9 +32,14 @@
         ></analytics-periods-form>
       </div>
     </base-card>
-    <base-card v-if="isLoaded" class="report-card">
-      <analytics-chart :data="analyticsData" :options="analyticsOptions"></analytics-chart>
-    </base-card>
+    <div v-if="isLoaded" class="centered">
+      <base-card>
+        <analytics-chart :data="analyticsData" :options="analyticsOptions"></analytics-chart>
+      </base-card>
+      <base-card>
+        <analytics-grid :grid="analyticsGrid"></analytics-grid>
+      </base-card>
+    </div>
   </div>
 </template>
 
@@ -43,8 +48,16 @@ import AnalyticsFiles from "../components/analytics/AnalyticsFiles.vue";
 import AnalyticsForm from "../components/analytics/AnalyticsForm.vue";
 import AnalyticsPeriodsForm from "../components/analytics/AnalyticsPeriodsForm.vue";
 import AnalyticsChart from "../components/analytics/AnalyticsChart.vue";
+import AnalyticsGrid from "../components/analytics/AnalyticsGrid.vue";
+
 export default {
-  components: { AnalyticsFiles, AnalyticsForm, AnalyticsPeriodsForm, AnalyticsChart },
+  components: {
+    AnalyticsFiles,
+    AnalyticsForm,
+    AnalyticsPeriodsForm,
+    AnalyticsChart,
+    AnalyticsGrid,
+  },
   data() {
     return {
       uploadNew: false,
@@ -62,6 +75,9 @@ export default {
     },
     analyticsData() {
       return this.$store.getters["analytics/data"];
+    },
+    analyticsGrid() {
+      return this.$store.getters["analytics/grid"];
     },
     analyticsOptions() {
       return this.$store.getters["analytics/dataOptions"];
@@ -84,6 +100,7 @@ export default {
       this.isLoading = false;
     },
     async loadData(data) {
+      this.isLoaded = false;
       this.isLoading = true;
       data = {
         filename: this.file,
