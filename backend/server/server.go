@@ -1,6 +1,7 @@
 package server
 
 import (
+	cachedb "backend/db/cache"
 	storagedb "backend/db/storage"
 	userdb "backend/db/user"
 	"backend/server/controllers"
@@ -15,6 +16,7 @@ func SetupServer() *gin.Engine {
 
 	storagedb.ConnectDB()
 	userdb.ConnectDB()
+	cachedb.ConnectDB()
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true

@@ -1,7 +1,9 @@
 package utils
 
 import (
+	cachedb "backend/db/cache"
 	storagedb "backend/db/storage"
+	"backend/server/models"
 	"fmt"
 	"time"
 )
@@ -10,7 +12,7 @@ var layout = "2006-01-02"
 var layoutDB = time.RFC3339Nano
 
 // Refactor this shit
-func GetAnalytics(userID, fileID, periodStart, periodEnd string) error {
+func GetAnalytics(userID, fileID, periodStart, periodEnd string) ([]string, []models.MRR, error) {
 	periodStartDate, _ := time.Parse(layout, periodStart)
 	periodEndDate, _ := time.Parse(layout, periodEnd)
 
@@ -18,48 +20,108 @@ func GetAnalytics(userID, fileID, periodStart, periodEnd string) error {
 	monthsCount := len(months)
 
 	ufID := fmt.Sprintf("%v.%v", userID, fileID)
+	ufp := fmt.Sprintf("%v-%v-%v", ufID, periodStart, periodEnd)
 
-	ins := true
-
-	mpp := storagedb.MPP{ufID, periodStart, periodEnd, months}
-	err := storagedb.CreateMPPTable(storagedb.DB, mpp)
+	mrr, err := cachedb.Read("cache", ufp)
 	if err != nil {
-		if err.Error() == "table already exists" {
-			ins = false
-		}
+		fmt.Println(err)
 	}
 
-	npe := periodEndDate.AddDate(0, 1, -1)
-	npestr := npe.Format(layout)
+	var totalMRR []models.MRR
 
-	invoices, err := storagedb.ReadByPeriod("mrr.storage", storagedb.AllFields, userID, fileID, periodStart, npestr)
-	if err != nil {
-		return err
-	}
+	if len(mrr) != 0 {
+		totalMRR = convertFetchedMRR(mrr, monthsCount)
+	} else {
+		ins := true
 
-	mppEntries := formMPPEntries(invoices, monthsCount, periodStartDate)
-	if ins {
-		for _, entry := range mppEntries {
-			err := storagedb.CreateDynamic(fmt.Sprintf("mrr.`%v-%v-%v`", ufID, periodStart, periodEnd), entry)
-			if err != nil {
-				return err
+		mpp := models.MPP{ufID, periodStart, periodEnd, months}
+		err = storagedb.CreateMPPTable(storagedb.DB, mpp)
+		if err != nil {
+			if err.Error() == "table already exists" {
+				ins = false
 			}
 		}
-	}
 
-	data, err := storagedb.ReadDynamic(fmt.Sprintf(`mrr."%v-%v-%v"`, ufID, periodStart, periodEnd))
-	if err != nil {
-		return err
-	}
-	fmt.Println(monthsCount)
-	totalMRR := make([]storagedb.MRR, monthsCount)
+		npe := periodEndDate.AddDate(0, 1, -1)
+		npestr := npe.Format(layout)
 
-	for _, client := range data {
-		clientFloat := []float32{}
-		for _, x := range client {
-			clientFloat = append(clientFloat, x.(float32))
+		invoices, err := storagedb.ReadByPeriod("mrr.storage", storagedb.AllFields, userID, fileID, periodStart, npestr)
+		if err != nil {
+			return nil, nil, err
 		}
-		clientMRR := calculateMRR(clientFloat)
+
+		mppEntries := formMPPEntries(invoices, monthsCount, periodStartDate)
+		if ins {
+			for _, entry := range mppEntries {
+				err := storagedb.CreateDynamic(fmt.Sprintf("mrr.`%v`", ufp), entry)
+				if err != nil {
+					return nil, nil, err
+				}
+			}
+		}
+
+		totalMoneyPerMonth, err := storagedb.ReadDynamic(fmt.Sprintf("mrr.`%v`", ufp))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		totalMRR = calculateTotalMRR(totalMoneyPerMonth)
+
+		totalMRRMap := map[string]interface{}{"mrr": totalMRR}
+
+		err = cachedb.Create("cache", []interface{}{ufp, totalMRRMap, 1})
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	fmt.Println(totalMRR)
+
+	return months, totalMRR, nil
+}
+
+func convertFetchedMRR(fetched []interface{}, monthsCount int) []models.MRR {
+	totalMRRFetched := make([]models.MRR, monthsCount)
+
+	mrrMap := fetched[0].([]interface{})[1].(map[interface{}]interface{})["mrr"].([]interface{})
+	for i, v := range mrrMap {
+		curMRR := models.MRR{}
+		for k, vv := range v.(map[interface{}]interface{}) {
+			if k == "New" {
+				curMRR.New = vv.(float32)
+			}
+			if k == "Old" {
+				curMRR.Old = vv.(float32)
+			}
+			if k == "Reactivation" {
+				curMRR.Reactivation = vv.(float32)
+			}
+			if k == "Expansion" {
+				curMRR.Expansion = vv.(float32)
+			}
+			if k == "Contraction" {
+				curMRR.Contraction = vv.(float32)
+			}
+			if k == "Churn" {
+				curMRR.Churn = vv.(float32)
+			}
+		}
+		totalMRRFetched[i] = curMRR
+	}
+
+	return totalMRRFetched
+}
+
+func calculateTotalMRR(totalMoneyPerMonth [][]interface{}) []models.MRR {
+	monthsCount := len(totalMoneyPerMonth[0])
+	totalMRR := make([]models.MRR, monthsCount)
+
+	for _, moneyPerMonth := range totalMoneyPerMonth {
+		clientFloat := []float32{}
+		for _, m := range moneyPerMonth {
+			clientFloat = append(clientFloat, m.(float32))
+		}
+		clientMRR := calculateClientMRR(clientFloat)
 
 		for i := 0; i < monthsCount; i++ {
 			totalMRR[i].New += clientMRR[i].New
@@ -71,17 +133,17 @@ func GetAnalytics(userID, fileID, periodStart, periodEnd string) error {
 		}
 	}
 
-	return nil
+	return totalMRR
 }
 
-func calculateMRR(moneyPerMonth []float32) []storagedb.MRR {
+func calculateClientMRR(moneyPerMonth []float32) []models.MRR {
 	monthsCount := len(moneyPerMonth)
-	clientMRR := make([]storagedb.MRR, monthsCount)
+	clientMRR := make([]models.MRR, monthsCount)
 
 	isNew := true
 
 	for i := range moneyPerMonth {
-		var monthMRR storagedb.MRR
+		var monthMRR models.MRR
 
 		if moneyPerMonth[i] > 0 && isNew {
 			monthMRR.New = moneyPerMonth[i]

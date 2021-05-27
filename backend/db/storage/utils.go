@@ -1,6 +1,7 @@
 package storagedb
 
 import (
+	"backend/server/models"
 	"bytes"
 	"errors"
 	"os"
@@ -31,7 +32,7 @@ func ConnectDB() {
 	DB = conn
 }
 
-func CreateMPPTable(conn *dbr.Connection, mpp MPP) error {
+func CreateMPPTable(conn *dbr.Connection, mpp models.MPP) error {
 	tmpl :=
 		`
 	CREATE TABLE mrr."{{ .UserFileID }}-{{ .PeriodStart }}-{{ .PeriodEnd }}"(
@@ -61,7 +62,7 @@ func CreateMPPTable(conn *dbr.Connection, mpp MPP) error {
 		return errors.New("table already exists")
 	}
 
-	return nil
+	return err
 }
 
 func initDB(conn *dbr.Connection) error {
@@ -69,11 +70,8 @@ func initDB(conn *dbr.Connection) error {
 	_, err := sess.Exec(`
 	CREATE DATABASE IF NOT EXISTS mrr
 	`)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func initTable(conn *dbr.Connection) error {
@@ -90,9 +88,6 @@ func initTable(conn *dbr.Connection) error {
 	) 
 	ENGINE = Memory
 	`)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
