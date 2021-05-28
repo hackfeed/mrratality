@@ -14,5 +14,5 @@ func Read(space, pk string) ([]interface{}, error) {
 		return nil, err
 	}
 
-	return resp.Data, err
+	return resp.Data, nil
 }

@@ -14,21 +14,21 @@ func SignUp(email, password string) (User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
+	var user User
+
 	count, err := UserCol.CountDocuments(ctx, bson.M{"email": email})
 	if err != nil {
-		return User{}, errors.New("Failed to check email")
+		return user, errors.New("Failed to check email")
 	}
 
 	if count > 0 {
-		return User{}, errors.New("This email is already taken")
+		return user, errors.New("This email is already taken")
 	}
 
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
-		return User{}, errors.New("Failed to hash password")
+		return user, errors.New("Failed to hash password")
 	}
-
-	var user User
 
 	user.Email = &email
 	user.Password = &hashedPassword
@@ -43,34 +43,37 @@ func SignUp(email, password string) (User, error) {
 
 	_, err = UserCol.InsertOne(ctx, user)
 	if err != nil {
-		return User{}, errors.New("Failed to create user")
+		err = errors.New("Failed to create user")
 	}
 
-	return user, nil
+	return user, err
 }
 
 func Login(email, password string) (User, error) {
 	user, err := Read(bson.M{"email": email})
 	if err != nil {
-		return User{}, errors.New("User with given email doesn't exist")
+		return user, errors.New("User with given email doesn't exist")
 	}
 
 	err = verifyPassword(password, *user.Password)
 	if err != nil {
-		return User{}, errors.New("Password is incorrect")
+		return user, errors.New("Password is incorrect")
 	}
 
 	token, refreshToken, err := generateTokens(*user.Email, user.UserID)
 	if err != nil {
-		return User{}, errors.New("Failed to generate tokens")
+		return user, errors.New("Failed to generate tokens")
 	}
 
 	err = updateTokens(token, refreshToken, user.UserID)
 	if err != nil {
-		return User{}, errors.New("Failed to update tokens")
+		err = errors.New("Failed to update tokens")
 	}
 
-	return user, nil
+	user.Token = &token
+	user.RefreshToken = &refreshToken
+
+	return user, err
 }
 
 func Read(filter bson.M) (User, error) {
@@ -80,11 +83,8 @@ func Read(filter bson.M) (User, error) {
 	var user User
 
 	err := UserCol.FindOne(ctx, filter).Decode(&user)
-	if err != nil {
-		return User{}, err
-	}
 
-	return user, nil
+	return user, err
 }
 
 func Update(obj primitive.D, filter bson.M) error {
@@ -105,9 +105,5 @@ func Update(obj primitive.D, filter bson.M) error {
 		&opt,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

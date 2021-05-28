@@ -62,7 +62,7 @@ func CreateMPPTable(conn *dbr.Connection, mpp models.MPP) error {
 		return errors.New("table already exists")
 	}
 
-	return err
+	return nil
 }
 
 func initDB(conn *dbr.Connection) error {

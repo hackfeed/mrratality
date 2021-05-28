@@ -79,7 +79,10 @@ func ReadDynamic(table string) ([][]interface{}, error) {
 
 	res := [][]interface{}{}
 
-	cols, _ := rows.Columns()
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
 	count := len(cols)
 	vals := make([]interface{}, count)
 	valsPtrs := make([]interface{}, count)
@@ -89,13 +92,16 @@ func ReadDynamic(table string) ([][]interface{}, error) {
 	}
 
 	for rows.Next() {
-		rows.Scan(valsPtrs...)
+		err = rows.Scan(valsPtrs...)
+		if err != nil {
+			return nil, err
+		}
 		row := []interface{}{}
 		row = append(row, vals...)
 		res = append(res, row)
 	}
 
-	return res, err
+	return res, nil
 }
 
 func Delete(table, userID, fileID string) error {

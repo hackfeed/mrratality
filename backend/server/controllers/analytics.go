@@ -3,7 +3,6 @@ package controllers
 import (
 	"backend/server/models"
 	"backend/server/utils"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -30,9 +29,8 @@ func GetAnalytics(c *gin.Context) {
 
 	months, mrr, err := utils.GetAnalytics(userID.(string), req.Filename, req.PeriodStart, req.PeriodEnd)
 	if err != nil {
-		fmt.Println(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to get analytics",
+			"message": err.Error(),
 		})
 		return
 	}

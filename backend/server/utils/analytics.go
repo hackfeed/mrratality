@@ -4,6 +4,7 @@ import (
 	cachedb "backend/db/cache"
 	storagedb "backend/db/storage"
 	"backend/server/models"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -11,105 +12,105 @@ import (
 var layout = "2006-01-02"
 var layoutDB = time.RFC3339Nano
 
-// Refactor this shit
-func GetAnalytics(userID, fileID, periodStart, periodEnd string) ([]string, []models.MRR, error) {
+func GetAnalytics(userID, fileID, periodStart, periodEnd string) ([]string, models.TotalMRR, error) {
+	var (
+		totalMRR models.TotalMRR
+		months   []string
+	)
+
 	periodStartDate, _ := time.Parse(layout, periodStart)
 	periodEndDate, _ := time.Parse(layout, periodEnd)
 
-	months := getMonthsBetween(periodEndDate, periodStartDate)
-	monthsCount := len(months)
+	if periodStartDate.After(periodEndDate) {
+		return months, totalMRR, errors.New("Period start should be less than period end")
+	}
 
 	ufID := fmt.Sprintf("%v.%v", userID, fileID)
 	ufp := fmt.Sprintf("%v-%v-%v", ufID, periodStart, periodEnd)
 
 	mrr, err := cachedb.Read("cache", ufp)
 	if err != nil {
-		fmt.Println(err)
+		return months, totalMRR, err
 	}
 
-	var totalMRR []models.MRR
+	months = getMonthsBetween(periodEndDate, periodStartDate)
 
 	if len(mrr) != 0 {
-		totalMRR = convertFetchedMRR(mrr, monthsCount)
+		totalMRR = convertFetchedMRR(mrr)
 	} else {
-		ins := true
-
 		mpp := models.MPP{ufID, periodStart, periodEnd, months}
-		err = storagedb.CreateMPPTable(storagedb.DB, mpp)
+		err = formMPPTable(mpp, userID, fileID, ufp, periodStartDate, periodEndDate)
 		if err != nil {
-			if err.Error() == "table already exists" {
-				ins = false
-			}
-		}
-
-		npe := periodEndDate.AddDate(0, 1, -1)
-		npestr := npe.Format(layout)
-
-		invoices, err := storagedb.ReadByPeriod("mrr.storage", storagedb.AllFields, userID, fileID, periodStart, npestr)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		mppEntries := formMPPEntries(invoices, monthsCount, periodStartDate)
-		if ins {
-			for _, entry := range mppEntries {
-				err := storagedb.CreateDynamic(fmt.Sprintf("mrr.`%v`", ufp), entry)
-				if err != nil {
-					return nil, nil, err
-				}
-			}
+			return months, totalMRR, err
 		}
 
 		totalMoneyPerMonth, err := storagedb.ReadDynamic(fmt.Sprintf("mrr.`%v`", ufp))
 		if err != nil {
-			return nil, nil, err
+			return months, totalMRR, err
 		}
 
-		totalMRR = calculateTotalMRR(totalMoneyPerMonth)
-
+		rawMRR := calculateTotalMRR(totalMoneyPerMonth)
+		totalMRR = convertRawMRR(rawMRR)
 		totalMRRMap := map[string]interface{}{"mrr": totalMRR}
 
-		err = cachedb.Create("cache", []interface{}{ufp, totalMRRMap, 1})
+		err = cachedb.Create("cache", []interface{}{ufp, totalMRRMap})
 		if err != nil {
-			fmt.Println(err)
+			return months, totalMRR, err
 		}
 	}
 
-	fmt.Println(totalMRR)
-
-	return months, totalMRR, nil
+	return months, totalMRR, err
 }
 
-func convertFetchedMRR(fetched []interface{}, monthsCount int) []models.MRR {
-	totalMRRFetched := make([]models.MRR, monthsCount)
+func convertRawMRR(rawMRR []models.MRR) models.TotalMRR {
+	var totalMRR models.TotalMRR
 
-	mrrMap := fetched[0].([]interface{})[1].(map[interface{}]interface{})["mrr"].([]interface{})
-	for i, v := range mrrMap {
-		curMRR := models.MRR{}
-		for k, vv := range v.(map[interface{}]interface{}) {
-			if k == "New" {
-				curMRR.New = vv.(float32)
-			}
-			if k == "Old" {
-				curMRR.Old = vv.(float32)
-			}
-			if k == "Reactivation" {
-				curMRR.Reactivation = vv.(float32)
-			}
-			if k == "Expansion" {
-				curMRR.Expansion = vv.(float32)
-			}
-			if k == "Contraction" {
-				curMRR.Contraction = vv.(float32)
-			}
-			if k == "Churn" {
-				curMRR.Churn = vv.(float32)
-			}
-		}
-		totalMRRFetched[i] = curMRR
+	for _, mrr := range rawMRR {
+		totalMRR.New = append(totalMRR.New, mrr.New)
+		totalMRR.Old = append(totalMRR.Old, mrr.Old)
+		totalMRR.Reactivation = append(totalMRR.Reactivation, mrr.Reactivation)
+		totalMRR.Expansion = append(totalMRR.Expansion, mrr.Expansion)
+		totalMRR.Contraction = append(totalMRR.Contraction, mrr.Contraction)
+		totalMRR.Churn = append(totalMRR.Churn, mrr.Churn)
+		totalMRR.Total = append(totalMRR.Total, mrr.New+mrr.Old+mrr.Reactivation+mrr.Expansion+mrr.Contraction+mrr.Churn)
 	}
 
-	return totalMRRFetched
+	return totalMRR
+}
+
+func convertFetchedMRR(fetchedMRR []interface{}) models.TotalMRR {
+	var totalMRR models.TotalMRR
+
+	mrrMap := fetchedMRR[0].([]interface{})[1].(map[interface{}]interface{})["mrr"].(map[interface{}]interface{})
+	for k, v := range mrrMap {
+		vfloat := []float32{}
+		for _, vv := range v.([]interface{}) {
+			vfloat = append(vfloat, vv.(float32))
+		}
+		if k == "New" {
+			totalMRR.New = vfloat
+		}
+		if k == "Old" {
+			totalMRR.Old = vfloat
+		}
+		if k == "Reactivation" {
+			totalMRR.Reactivation = vfloat
+		}
+		if k == "Expansion" {
+			totalMRR.Expansion = vfloat
+		}
+		if k == "Contraction" {
+			totalMRR.Contraction = vfloat
+		}
+		if k == "Churn" {
+			totalMRR.Churn = vfloat
+		}
+		if k == "Total" {
+			totalMRR.Total = vfloat
+		}
+	}
+
+	return totalMRR
 }
 
 func calculateTotalMRR(totalMoneyPerMonth [][]interface{}) []models.MRR {
@@ -166,6 +167,42 @@ func calculateClientMRR(moneyPerMonth []float32) []models.MRR {
 	return clientMRR
 }
 
+func formMPPTable(mpp models.MPP, userID, fileID, ufp string, periodStartDate, periodEndDate time.Time) error {
+	ins := true
+
+	err := storagedb.CreateMPPTable(storagedb.DB, mpp)
+	if err != nil {
+		if err.Error() == "table already exists" {
+			ins = false
+		}
+	}
+
+	normPeriodEndDate := periodEndDate.AddDate(0, 1, -1)
+	normPeriodEnd := normPeriodEndDate.Format(layout)
+	periodStart := periodStartDate.Format(layout)
+
+	invoices, err := storagedb.ReadByPeriod("mrr.storage", storagedb.AllFields, userID, fileID, periodStart, normPeriodEnd)
+	if err != nil {
+		return err
+	}
+
+	if len(invoices) == 0 {
+		return errors.New("No data found for given period")
+	}
+
+	if ins {
+		mppEntries := formMPPEntries(invoices, len(mpp.Dates), periodStartDate)
+		for _, entry := range mppEntries {
+			err := storagedb.CreateDynamic(fmt.Sprintf("mrr.`%v`", ufp), entry)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return err
+}
+
 func formMPPEntries(invoices []storagedb.Invoice, monthsCount int, periodStartDate time.Time) [][]interface{} {
 	invoicesCount := len(invoices)
 	mppEntries := make([][]interface{}, invoicesCount)
@@ -209,22 +246,22 @@ func getMonthsBetween(fdate, sdate time.Time) []string {
 		fdate, sdate = sdate, fdate
 	}
 
-	fy, fm, _ := fdate.Date()
-	sy, sm, _ := sdate.Date()
+	fyear, fmonth, _ := fdate.Date()
+	syear, smonth, _ := sdate.Date()
 
-	cnt := int(sm - fm)
-	cnt += 12*(sy-fy) + 1
+	count := int(smonth - fmonth)
+	count += 12*(syear-fyear) + 1
 
 	months := []string{}
 
-	for i := 0; i < cnt; i++ {
-		dy := (int(fm) + i) / 12
-		m := (int(fm) + i) % 12
-		if m == 0 {
-			dy -= 1
-			m = 12
+	for i := 0; i < count; i++ {
+		yearsDif := (int(fmonth) + i) / 12
+		month := (int(fmonth) + i) % 12
+		if month == 0 {
+			yearsDif -= 1
+			month = 12
 		}
-		months = append(months, fmt.Sprintf("%v.%v", m, fy+dy))
+		months = append(months, fmt.Sprintf("%v.%v", month, fyear+yearsDif))
 	}
 
 	return months
@@ -235,15 +272,15 @@ func getMonthsDiff(fdate, sdate time.Time) int {
 		sdate = sdate.In(fdate.Location())
 	}
 
-	fy, fm, _ := fdate.Date()
-	sy, sm, _ := sdate.Date()
+	fyear, fmonth, _ := fdate.Date()
+	syear, smonth, _ := sdate.Date()
 
-	if fy > sy {
-		fy, sy = sy, fy
+	if fyear > syear {
+		fyear, syear = syear, fyear
 	}
 
-	cnt := int(fm - sm)
-	cnt += 12 * (sy - fy)
+	count := int(fmonth - smonth)
+	count += 12 * (syear - fyear)
 
-	return cnt
+	return count
 }

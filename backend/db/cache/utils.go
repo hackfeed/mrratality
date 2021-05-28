@@ -34,14 +34,15 @@ func initSpace(conn *tarantool.Connection) error {
 			return err
 		}
 	}
+
 	_, err = conn.Eval(`return box.space.cache:format({
 		{name = 'userfileperiod', type = 'string', is_nullable = false},
 		{name = 'mrr', type = 'map', is_nullable = false},
-		{name = 'expiration', type = 'integer', is_nullable = false},
 	})`, []interface{}{})
 	if err != nil {
 		return err
 	}
+
 	_, err = conn.Eval("return box.space.cache:create_index('pk', {parts = {'userfileperiod'}})", []interface{}{})
 	if err != nil {
 		errString := err.Error()

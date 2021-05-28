@@ -42,16 +42,16 @@ func ValidateToken(signedToken string) (*SignedDetails, error) {
 		},
 	)
 	if err != nil {
-		return &SignedDetails{}, err
+		return nil, err
 	}
 
 	claims, ok := token.Claims.(*SignedDetails)
 	if !ok {
-		return &SignedDetails{}, errors.New("token is invalid")
+		return nil, errors.New("token is invalid")
 	}
 
 	if claims.ExpiresAt < time.Now().Local().Unix() {
-		return &SignedDetails{}, errors.New("token is expired")
+		return nil, errors.New("token is expired")
 	}
 
 	return claims, nil

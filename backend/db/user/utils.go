@@ -47,6 +47,8 @@ func ConnectDB() {
 }
 
 func generateTokens(email, userID string) (string, string, error) {
+	var token, refreshToken string
+
 	claims := &signedDetails{
 		Email:  email,
 		UserID: userID,
@@ -63,14 +65,11 @@ func generateTokens(email, userID string) (string, string, error) {
 
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(os.Getenv("SECRET_KEY")))
 	if err != nil {
-		return "", "", err
+		return token, refreshToken, err
 	}
-	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(os.Getenv("SECRET_KEY")))
-	if err != nil {
-		return "", "", err
-	}
+	refreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(os.Getenv("SECRET_KEY")))
 
-	return token, refreshToken, nil
+	return token, refreshToken, err
 }
 
 func updateTokens(signedToken, signedRefreshToken, userID string) error {
@@ -87,18 +86,10 @@ func updateTokens(signedToken, signedRefreshToken, userID string) error {
 
 func hashPassword(pass string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(pass), 14)
-	if err != nil {
-		return "", err
-	}
 
-	return string(bytes), nil
+	return string(bytes), err
 }
 
 func verifyPassword(userPass, providedPass string) error {
-	err := bcrypt.CompareHashAndPassword([]byte(providedPass), []byte(userPass))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return bcrypt.CompareHashAndPassword([]byte(providedPass), []byte(userPass))
 }

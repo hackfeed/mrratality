@@ -58,7 +58,6 @@ func DeleteFile(c *gin.Context) {
 
 	err = utils.DeleteFile(userID.(string), req.Name)
 	if err != nil {
-		fmt.Println(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": "Failed to delete file",
 		})
@@ -71,6 +70,14 @@ func DeleteFile(c *gin.Context) {
 }
 
 func SaveFile(c *gin.Context) {
+	userID, ie := c.Get("userID")
+	if !ie {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "Unable to determine logged in user",
+		})
+		return
+	}
+
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -87,14 +94,6 @@ func SaveFile(c *gin.Context) {
 		return
 	}
 
-	userID, ie := c.Get("userID")
-	if !ie {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"message": "Unable to determine logged in user",
-		})
-		return
-	}
-
 	dir := fmt.Sprintf("static/%v", userID)
 	fname := fmt.Sprintf("%v%v", uuid.New(), fext)
 	fpath := fmt.Sprintf("%v/%v", dir, fname)
@@ -105,7 +104,6 @@ func SaveFile(c *gin.Context) {
 
 	err = c.SaveUploadedFile(file, fpath)
 	if err != nil {
-		fmt.Println(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "Unable to save the file",
 		})
