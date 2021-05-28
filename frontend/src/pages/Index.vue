@@ -6,8 +6,12 @@
         <base-button link to="/analytics">Try now</base-button>
       </base-card>
       <base-card>
-        <h2>Quick MRR report</h2>
-        <img src="@/assets/report.png" alt="Quick MRR Report" />
+        <h2>Quick MRR report in chart style</h2>
+        <img src="@/assets/mrr.png" alt="Quick MRR Report" />
+      </base-card>
+      <base-card>
+        <h2>... and in table style</h2>
+        <img src="@/assets/mrrtbl.png" alt="Quick MRR Report" />
       </base-card>
       <base-card>
         <h2>Flexible period adjustment</h2>
@@ -15,7 +19,7 @@
       </base-card>
       <base-card>
         <h2>Simple data export from CSV</h2>
-        <img src="@/assets/import.png" alt="Simple data export from CSV" />
+        <img src="@/assets/csv.png" alt="Simple data export from CSV" />
       </base-card>
       <base-card>
         <h2>Upload your data now and get carte blanche of your money flow</h2>

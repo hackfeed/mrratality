@@ -7,7 +7,7 @@
       </h1>
       <ul>
         <li>© 2021 hackfeed</li>
-        <li><a href="mailto::hackfeed@yandex.ru">Contact me</a></li>
+        <li><a href="mailto:hackfeed@yandex.ru">Contact me</a></li>
         <li><a href="https://github.com/hackfeed/mrratality">Project Page</a></li>
       </ul>
     </nav>

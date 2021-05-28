@@ -86,6 +86,12 @@ export default {
       return this.analyticsFiles.length === 0;
     },
   },
+  watch: {
+    file() {
+      this.$store.commit("analytics/setPeriodStart", "2021-01");
+      this.$store.commit("analytics/setPeriodEnd", "2021-01");
+    },
+  },
   methods: {
     async uploadData(data) {
       this.isLoading = true;

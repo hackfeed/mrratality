@@ -1,4 +1,10 @@
 export default {
+  setPeriodStart(state, data) {
+    state.periodStart = data;
+  },
+  setPeriodEnd(state, data) {
+    state.periodEnd = data;
+  },
   setFile(state, data) {
     state.file = data;
   },

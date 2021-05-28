@@ -22,12 +22,14 @@ export default {
   emits: ["load-data", "upload-new"],
   data() {
     return {
-      periodStart: "2021-01",
-      periodEnd: "2021-01",
+      periodStart: this.$store.getters["analytics/periodStart"],
+      periodEnd: this.$store.getters["analytics/periodEnd"],
     };
   },
   methods: {
     submitPeriods() {
+      this.$store.commit("analytics/setPeriodStart", this.periodStart);
+      this.$store.commit("analytics/setPeriodEnd", this.periodEnd);
       this.$emit("load-data", { periodStart: this.periodStart, periodEnd: this.periodEnd });
     },
     uploadNew(toUpload) {

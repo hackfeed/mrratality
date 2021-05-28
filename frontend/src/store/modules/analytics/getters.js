@@ -1,4 +1,10 @@
 export default {
+  periodStart(state) {
+    return state.periodStart;
+  },
+  periodEnd(state) {
+    return state.periodEnd;
+  },
   files(state) {
     return state.files;
   },

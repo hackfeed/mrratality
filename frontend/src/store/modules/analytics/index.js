@@ -6,6 +6,8 @@ export default {
   namespaced: true,
   state() {
     return {
+      periodStart: "2021-01",
+      periodEnd: "2021-01",
       files: [],
       file: null,
       grid: {

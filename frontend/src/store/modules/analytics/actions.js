@@ -31,59 +31,44 @@ export default {
       throw error;
     }
 
-    const curData = context.rootGetters["analytics/data"];
+    const curData = { ...context.rootGetters["analytics/data"] };
     const mrr = responseData.mrr;
     const months = responseData.months;
 
     curData.labels = months;
 
-    const newMRR = [];
-    const oldMRR = [];
-    const expansionMRR = [];
-    const reactivationMRR = [];
-    const contractionMRR = [];
-    const churnMRR = [];
-
-    for (const el of mrr) {
-      newMRR.push(el.New);
-      oldMRR.push(el.Old);
-      expansionMRR.push(el.Expansion);
-      reactivationMRR.push(el.Reactivation);
-      contractionMRR.push(el.Contraction);
-      churnMRR.push(el.Churn);
-    }
-
     for (const el of curData.datasets) {
       if (el.label === "New") {
-        el.data = newMRR;
+        el.data = mrr.New;
       }
       if (el.label === "Old") {
-        el.data = oldMRR;
+        el.data = mrr.Old;
       }
       if (el.label === "Expansion") {
-        el.data = expansionMRR;
+        el.data = mrr.Expansion;
       }
       if (el.label === "Reactivation") {
-        el.data = reactivationMRR;
+        el.data = mrr.Reactivation;
       }
       if (el.label === "Contraction") {
-        el.data = contractionMRR;
+        el.data = mrr.Contraction;
       }
       if (el.label === "Churn") {
-        el.data = churnMRR;
+        el.data = mrr.Churn;
       }
     }
 
     const grid = {
       title: "Monthly Reccuring Revenue (Table)",
-      cols: ["", ...months],
+      cols: [""].concat(months),
       rows: [
-        ["New", ...newMRR],
-        ["Old", ...oldMRR],
-        ["Expansion", ...expansionMRR],
-        ["Reactivation", ...reactivationMRR],
-        ["Contraction", ...contractionMRR],
-        ["Churn", ...churnMRR],
+        ["New"].concat(mrr.New),
+        ["Old"].concat(mrr.Old),
+        ["Expansion"].concat(mrr.Expansion),
+        ["Reactivation"].concat(mrr.Reactivation),
+        ["Contraction"].concat(mrr.Contraction),
+        ["Churn"].concat(mrr.Churn),
+        ["MRR"].concat(mrr.Total),
       ],
     };
 
