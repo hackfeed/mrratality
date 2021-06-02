@@ -1,8 +1,7 @@
-\usepackage{cmap} % Улучшенный поиск русских слов в полученном pdf-файле
-\usepackage[T2A]{fontenc} % Поддержка русских букв
-\usepackage[utf8]{inputenc} % Кодировка utf8
-\usepackage[english,russian]{babel} % Языки: русский, английский
-%\usepackage{pscyr} % Нормальные шрифты
+\usepackage{cmap}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
 \usepackage{enumitem}
 
 \usepackage{caption}
@@ -28,10 +27,10 @@
 \titlespacing*{\subsection}{\parindent}{*4}{*4}
 
 \usepackage{setspace}
-\onehalfspacing % Полуторный интервал
+\onehalfspacing
 
 \frenchspacing
-\usepackage{indentfirst} % Красная строка
+\usepackage{indentfirst}
 
 \usepackage{titlesec}
 \titleformat{\chapter}{\LARGE\bfseries}{\thechapter}{20pt}{\LARGE\bfseries}
@@ -95,7 +94,6 @@
 	morecomment=[l][\color{magenta}]{\#},
 	columns=fullflexible
 }
-
 \lstdefinestyle{JavaScript}{
 	language=JavaScript,
 	style=JSES6Base
@@ -104,6 +102,29 @@
 	language=ES6,
 	style=JSES6Base
 }
+
+\lstdefinestyle{go}{
+	language=Go,
+	backgroundcolor=\color{white},
+	basicstyle=\footnotesize\ttfamily,
+	keywordstyle=\color{blue},
+	stringstyle=\color{red},
+	commentstyle=\color{gray},
+	directivestyle=\color{orange},
+	numbers=left,
+	numberstyle=\tiny,
+	stepnumber=1,
+	numbersep=5pt,
+	frame=single,
+	tabsize=4,
+	captionpos=t,
+	breaklines=true,
+	breakatwhitespace=true,
+	escapeinside={\#*}{*)},
+	morecomment=[l][\color{magenta}]{\#},
+	columns=fullflexible
+}
+
 
 \usepackage{multirow}
 
@@ -127,9 +148,9 @@
 	\end{figure}
 }
 
-\usepackage[justification=centering]{caption} % Настройка подписей float объектов
+\usepackage[justification=centering]{caption}
 
-\usepackage[unicode,pdftex]{hyperref} % Ссылки в pdf
+\usepackage[unicode,pdftex]{hyperref}
 \hypersetup{hidelinks}
 
 \usepackage{csvsimple}
