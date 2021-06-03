@@ -16,7 +16,6 @@ services:
       - ./data/clickhouse/data:/var/lib/clickhouse
     ports:
       - 8123:8123
-      - 9000:9000
 
   mongo:
     image: mongo:4.4
@@ -51,4 +50,7 @@ services:
     ports:
       - 8081:8081
     depends_on:
+      - tarantool
       - clickhouse
+      - mongo
+      - frontend
