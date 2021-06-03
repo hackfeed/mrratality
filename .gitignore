@@ -4,7 +4,7 @@ data/tarantool
 data/mongo
 
 # Additional data
-data/scripts
+*.csv
 
 # OSX related files
 .DS_Store
