@@ -59,7 +59,7 @@ export default {
   methods: {
     async submitForm() {
       this.formIsValid = true;
-      if (this.email === "" || !this.email.includes("@") || this.password.length < 6) {
+      if (this.email === "" || !this.email.includes("@") || this.password.length < 5) {
         this.formIsValid = false;
         return;
       }
